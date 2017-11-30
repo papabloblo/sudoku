@@ -45,7 +45,12 @@ ind_cuadricula <- c(
   rep(rep(x = 4:6, each = 3), 3),
   rep(rep(x = 7:9, each = 3), 3))
 
-fitness_sudoku <- function(x, ind_cudricula){
+fitness_sudoku <- function(x, ind_cudricula = ind_cuadricula, solucion_inicial){
+  
+  casillas_vacias <- is.na(solucion_inicial)
+
+  solucion_inicial[casillas_vacias] <- x
+
   x <- matrix(x,
               ncol = 9,
               nrow = 9)

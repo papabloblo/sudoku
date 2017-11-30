@@ -26,17 +26,9 @@ algoritmo_genetico <- function(poblacion_inicial,
                                print_each    = 100
                                ){
 
-  genes_fijos_NA <- is.na(genes_fijos)
-
-  fitness <- lapply(lapply(poblacion_inicial,
-                                      function(x){
-                                        genes_fijos2 <- genes_fijos
-                                        genes_fijos2[genes_fijos_NA] <- x
-                                        return(genes_fijos2)
-                                      }
-                           ),
-                    funcion_fitness
-                    )
+  fitness <- lapply(poblacion_inicial,
+                    funcion_fitness,
+                    solucion_inicial = genes_fijos)
 
 
   traza <- list(iteracion = 0L,
@@ -52,7 +44,7 @@ algoritmo_genetico <- function(poblacion_inicial,
     mejor <- which(unlist(fitness) == min(unlist(fitness)))
     if (length(mejor) > 1){
       # Se muestrea para el caso en el que haya empate.
-      mejor <- sample(mejor,1)  
+      mejor <- sample(mejor, 1)  
     }
     
 
@@ -72,20 +64,14 @@ algoritmo_genetico <- function(poblacion_inicial,
                                     valores_posibles = valores_mutacion
                                     )
 
-    fitness <- lapply(lapply(poblacion,
-                             function(x){
-                               genes_fijos2 <- genes_fijos
-                               genes_fijos2[genes_fijos_NA] <- x
-                               return(genes_fijos2)
-                             }
-                             ),
-                      funcion_fitness
-                      )
+    fitness <- lapply(poblacion,
+                      funcion_fitness,
+                      solucion_inicial = genes_fijos)
 
     peor <- which(unlist(fitness) == max(unlist(fitness)))
     if (length(peor) > 1){
       # Se muestrea para el caso en el que haya empate.
-      peor <- sample(peor,1)  
+      peor <- sample(peor, 1)  
     }
     
     poblacion[[peor]] <- individuo_elitismo
