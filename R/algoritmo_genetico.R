@@ -49,9 +49,12 @@ algoritmo_genetico <- function(poblacion_inicial,
   ini <- Sys.time()
   while (!any(fitness == 0) && i <= max_iter){
 
-    # Se muestrea para el caso en el que haya empate.
-    mejor <- sample(which(unlist(fitness) == min(unlist(fitness))),
-                    1)
+    mejor <- which(unlist(fitness) == min(unlist(fitness)))
+    if (length(mejor) > 1){
+      # Se muestrea para el caso en el que haya empate.
+      mejor <- sample(mejor,1)  
+    }
+    
 
     # Se conserva el mejor individuo para usarlo en elitismo
     individuo_elitismo <- poblacion[[mejor]]
@@ -79,9 +82,12 @@ algoritmo_genetico <- function(poblacion_inicial,
                       funcion_fitness
                       )
 
-    # Se muestrea para el caso en el que haya empate.
-    peor <- sample(which(unlist(fitness) == max(unlist(fitness))),
-                   1)
+    peor <- which(unlist(fitness) == max(unlist(fitness)))
+    if (length(peor) > 1){
+      # Se muestrea para el caso en el que haya empate.
+      peor <- sample(peor,1)  
+    }
+    
     poblacion[[peor]] <- individuo_elitismo
     fitness[[peor]] <- fitness_elitismo
 
