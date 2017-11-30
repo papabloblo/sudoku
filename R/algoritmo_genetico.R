@@ -31,12 +31,12 @@ algoritmo_genetico <- function(poblacion_inicial,
                     solucion_inicial = genes_fijos)
 
 
-  traza <- list(iteracion = 0L,
-                fitness = min(unlist(fitness)),
-                tiempo = 0L)
+  traza <- list(iteracion = 1:max_iter,
+                fitness = list(unlist(fitness)),
+                tiempo = numeric(max_iter))
 
   poblacion <- poblacion_inicial
-  i <- 1L
+  i <- 2L
 
   ini <- Sys.time()
   while (!any(fitness == 0) && i <= max_iter){
@@ -81,13 +81,12 @@ algoritmo_genetico <- function(poblacion_inicial,
       cat("Iteración: ", i, "| Mejor valor de fitness: ", min(unlist(fitness)), "| Tiempo transcurrido: ", print(Sys.time() - ini))
     }
 
-    traza$iteracion <- c(traza$iteracion, i)
-    traza$fitness <- c(traza$fitness, min(unlist(fitness)))
-    traza$tiempo <- c(traza$tiempo, Sys.time() - ini)
+    traza$fitness[[i]] <- unlist(fitness)
+    traza$tiempo[i] <- Sys.time() - ini
 
     i <- i + 1L
   }
-
+  traza$poblacion_final <- poblacion
   traza$parametros <- data.frame(tam_poblacion,
                                  max_iter,
                                  print_each,
