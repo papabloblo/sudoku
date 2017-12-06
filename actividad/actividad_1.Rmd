@@ -28,7 +28,9 @@ references:
 
 # Introducción
 
-El juego del Sudoku 
+Los algoritmos propios de la computación evolutiva pueden aplicarse en campos muy diversos. El objetivo de esta actividad es el de describir el **comportamiento de los algoritmos genéticos aplicados a la resolución del pasatiempo conocido como Sudoku**.
+
+Comenzaremos describiendo en qué consiste el problema del sudoku y definiéndolo de una manera formal. Después, se comentarácómo se ha llevado a cabo la implementación en R para pasar a hacer una evaluación experimental que nos permita discutir el comportamiento.
 
 # Descripción del problema del sudoku
 
