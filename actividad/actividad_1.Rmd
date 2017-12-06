@@ -144,6 +144,7 @@ La función de *fitness* que el algoritmo tratará de minimizar será la que apa
 
 ## Inicialización de la población
 
+<<<<<<< HEAD
 La población inicial del algoritmo se realizatá de forma aleatoria, es decir, cada individuo estará representado por los genes que le corresponda y cada gen se inicializará como un número entero aleatorio entre 1 y 9.
 
 ## Selección de padres
@@ -152,6 +153,12 @@ Para poder realizar el cruce entre individuos que se describe en la siguiente se
 
 ## Cruce
 El cruce entre los padres se realizará mediante **cruce por un punto**.
+=======
+## Selección de padres
+
+## Cruce
+
+>>>>>>> 6f6541ddb8eda9bcfb8bd3051d6e81f0a660d770
 
 ## Mutación
 Una vez producido el cruce entre padres y obtenida su descendencia, se aplicará mutación *random resetting*, es decir, cada uno de los genes de cada individuo podrá sufrir una mutación con una probabilidad dada. En el caso de que se produzca una mutación en un gen, esta podrá tomar un valor entero aleatorio entre 1 y 9.
