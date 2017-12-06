@@ -1,0 +1,185 @@
+---
+title: "Actividad 1"
+author: Pablo Hidalgo García
+output: 
+  html_notebook: 
+    number_sections: yes
+    toc: yes
+    theme: flatly
+references:
+- id: fenner2012a
+  title: One-click science marketing
+  author:
+  - family: Fenner
+    given: Martin
+  container-title: Nature Materials
+  volume: 11
+  URL: 'http://dx.doi.org/10.1038/nmat3283'
+  DOI: 10.1038/nmat3283
+  issue: 4
+  publisher: Nature Publishing Group
+  page: 261-263
+  type: article-journal
+  issued:
+    year: 2012
+    month: 3
+---
+
+
+# Introducción
+
+El juego del Sudoku 
+
+# Descripción del problema del sudoku
+
+El juego del Sudoku está compuesto por una matriz de dimensión $9x9$ en la que se disponen números enteros del 1 al 9. Para que este juego se considere resuelto, se ha de verificar:
+
+1. Cada **fila** contiene una permutación de los 9 enteros apareciendo cada uno de ellos una y solo una vez.
+2. Cada **columna** contiene una permutación de los 9 enteros apareciendo cada uno de ellos una y solo una vez.
+3. Cada **subcuadrícula** debe contener una permutación de los 9 enteros apareciendo cada uno de ellos una y solo una vez.
+
+Expresado matemáticamente: sea un vector $s\in \{1,2,\ldots,9\}^{81}$ donde se definen
+
+$$
+columna(j) = \{i \in \{1,\ldots, 81\}\, | \, mod(i, 9)= mod(j, 9)\} 
+$$
+
+<!-- $$ -->
+<!-- columna_j = \{i \in \{1,\ldots, 81\}\, | \, mod(i, 9) + 1= j\}  -->
+<!-- $$ -->
+
+$$
+fila(j) = \{i \in \{1,\ldots, 81\}\, | \, \lfloor j/9 \rfloor  = \lfloor i/9\rfloor\}
+$$
+donde $\lfloor a \rfloor$ se refiere a la parte entera.
+
+<!-- $$ -->
+<!-- fila_j = \{i \in \{1,\ldots, 81\}\, | \, (j-1)\cdot9 \lt i\leq j\cdot9\}  -->
+<!-- $$ -->
+
+$$
+subcuadrícula_j = \{i \in \{1,\ldots, 81\}\, | \, (j-1)\cdot3 \lt i\leq j\cdot3 \,  \cup \, mod(i, 3) + 1= j \} 
+$$
+
+Por otro lado, definimos la funciones:
+
+$$
+c(i) = \sum_{\{j\in columna(i)|j \ne i\}} I(s_i = s_j)
+$$
+
+El sudoku se considerará resuelto si y solo si $\sum_i f(i) = 0$, $\sum_i c(i) = 0$ y $\sum_i s(i) = 0$, o lo que es lo mismo
+
+$$
+\sum_{i=1}^{81} f(i) + c(i) + s(i) = 0
+$$
+  
+La función de *fitness* del algoritmo genético será
+$$
+fitness(s) = \sum_{i=1}^{81} f(i) + c(i) + s(i)
+$$
+
+Cuanto menor sea el valor de la función *fitness*, más cerca de la solución estaremos.
+
+La representación de cada individuo se ha hecho conforme a un vector 
+
+<!-- $M\in\mathcal{M}_{9\times9}$ tal que $m_{ij}\in \{1, 2, \ldots, 9\}$, $\forall \, i, j = 1, \ldots, 9$.  -->
+
+Defimos las siguientes funciones.
+
+Sea $f(i)$ el número de celdas en la misma fila que la celda $i$ cuyo valor coincide con el de esta última celda, es decir,
+
+$$
+f(i, j) = \sum_{k\ne j}I(m_{ij} = m_{ik})
+$$
+
+$$
+c(i, j) = \sum_{k\ne i}I(m_{ij} = m_{kj})
+$$
+
+Se definen las subcuadrículas $s\in\{1, \ldots, 9\}$ de forma que
+
+$$
+s(i,j)
+$$
+
+- $m_{i\cdot} = 0,\, \forall i = 1,\ldots, 9$
+
+- $m_{\cdot j} = 0,\, \forall j = 1,\ldots, 9$
+
+siendo 
+
+$$
+m_{i\cdot} = \sum_{i=1}^9\sum_{j\ne i} I(m_{ij} \ne m_{i,i})
+$$
+
+# Implementación
+
+Se ha elegido como lenguaje de programación R. R es un tipo de lenguaje *Open Source* con una gran aceptación dentro del área del *data science*. 
+
+Todas las funciones se han implementado de tal forma que puedan utilizarse para aplicar un algoritmo genético en general y no se han particularizado para el problema del Sudoku a excepción de la función de *fitness*.
+
+Toda la documentación de cada una de las funciones implementadas se encuentra en el pdf adjunto.
+
+
+
+# Evaluación experimental
+
+El objetivo último es el de **evaluar cómo impactan los diferentes valores de la probabilidad de mutación en el algoritmo genético**. 
+Los parámetros que rigen el algoritmo genético son:
+
+- Tamaño de la población.
+- En la selección de padres por torneo, el tamaño del torneo.
+- Probabilidad de cruce
+- Probabilidad de mutación.
+
+Para evaluar la idoneidad del algoritmo genético, se han generado $100$ combinaciones aleatorias de los parámetros del algoritmo.
+
+- **Tamaño de la población.**: entre $10$ y $200$ individuos.
+- **Tamaño del torneo**: entre $2$ y $10$.
+- **Probabilidad de cruce**: valor con distrbución uniforme $U(0.5, 1)$.
+- **Probabilidad de mutación**: valor con distrbución uniforme $U(0.01, 0.2)$.
+
+```{r}
+library(dplyr)
+set.seed(1234)
+n <- 100
+
+tam_poblacion <- sample(10:200, size = n, replace = TRUE)
+prob_cruce <- runif(n = n, min = 0.5, max = 1)
+tam_torneo <- sample(2:10, size = n, replace =TRUE)
+prob_mutacion <- runif(n = n, min = 0.001, max = 0.2)
+
+grid <- data_frame(tam_poblacion,
+                   prob_cruce,
+                   tam_torneo,
+                   prob_mutacion)
+head(grid)
+```
+
+Cada combinación de parámetros se ha replicado $10$ veces para poder obtener datos sobre los que realizar análisis estadísticos.
+
+
+
+La metodología que se ha llevado ha sido la de lanzar 
+
+# Conclusiones
+
+La resolución del Sudoku mediante el algoritmo genético implementado no parece ser la técnica más adecuada. En muchas de la mayoría de las combinaciones, el problema del Sudoku no estaba resuelto en las $5000$ primeras iteraciones, por lo que no se ha observado una eficiencia.
+
+Una parte que se podría tratar de estudiar es la de si la representación de los individuos mediante un gen en cada celda con un número comprendido entre 1 y 9 es la más adecuada. Se propone como trabajo futuro el estudio de otras respresentaciones, como la representación con permutaciones. Es decir, cada individuo estaría representado por un genotipo 
+$$
+\begin{aligned}
+s = (&1, 2, \ldots, 9,\\
+  &1, 2, \ldots, 9,\\
+  &1, 2, \ldots, 9,\\
+  &\ldots,\\
+  &1, 2, \ldots, 9)
+\end{aligned}
+$$
+
+Y cualquier individuo debería ser una permutación, lo que supondría elegir otro tipo de mutación que la *random resetting* elegida para esta implementación.
+
+[@fenner2012a]
+
+# Referencias
+
