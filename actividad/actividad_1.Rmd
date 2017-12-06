@@ -127,6 +127,33 @@ $$
 
 # Implementación
 
+El juego del sudoku se va a abordar mediante un algoritmo genético. Hay distintas estrategias que se podrían seguir para este problema. En este caso, la implementación se ha realizado conforme a las características que se detallan a continuación.
+
+## Representación de cada individuo 
+
+Cada celda $s_i$ del sudoku estará asociada a un gen representado por números enteros del 1 al 9, es decir, $s_i\in \{1, 2, \ldots, 9\}$. El genotipo estará entonces representado por una cadena de enteros.
+
+Aunque el genotipo de cada individuo contendrá un total de $81$ genes, solo se aplicará el algoritmo sobre aquellos genes (casillas) que estén vacíos en la solución inicial. Por tanto, el algoritmo genético manejará el genotipo $s_0$ de forma que 
+$$
+s_i = s^1_i si 
+$$
+
+## Función de adaptación (*fitness*)
+
+La función de *fitness* que el algoritmo tratará de minimizar será la que aparece en la ecuación ]bla]. Como se dijo anteriormente, un valor de $fitness(s)=0$ asegura que el juego ha sido resuelto. El valor máximo de esta función se alcanzará cuando **todas las casillas (genes) contengan el mismo valor** y tendrá un valor de $fitness(s) = 972$ 
+
+## Inicialización de la población
+
+## Selección de padres
+
+## Cruce
+
+
+## Mutación
+Una vez producido el cruce entre padres y obtenida su descendencia, se aplicará mutación *random resetting*, es decir, cada uno de los genes de cada individuo podrá sufrir una mutación con una probabilidad dada. En el caso de que se produzca una mutación en un gen, esta podrá tomar un valor entero aleatorio entre 1 y 9.
+
+## Selección de supervivientes
+
 Se ha elegido como lenguaje de programación R. R es un tipo de lenguaje *Open Source* con una gran aceptación dentro del área del *data science*. 
 
 Todas las funciones se han implementado de tal forma que puedan utilizarse para aplicar un algoritmo genético en general y no se han particularizado para el problema del Sudoku a excepción de la función de *fitness*.
