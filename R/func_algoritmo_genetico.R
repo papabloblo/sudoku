@@ -1,5 +1,8 @@
 #' Random integer representation
 #'
+#' Generación aleatoria de un individuo cuyo genotipo está representado 
+#' por una cadena de enteros.
+#'
 #' @param valores vector. Valores posibles que puede tener cada gen.
 #' @param tam integer. Tamaño del genotipo.
 #'
@@ -44,6 +47,18 @@ seleccion_padres <- function(num_padres,
 }
 
 
+#' Cruce por un punto
+#' 
+#' Cruce entre dos individuos (padres) para generar dos descendientes
+#' por medio de cruce por un punto.
+#'
+#' @param padres list. Lista con los genotipos de los dos padres.
+#' @param prob_cruce float. Probabilidad de que se produzca cruce entre los padres.
+#'
+#' @return
+#' @export
+#'
+#' @examples
 one_point_crossover <- function(padres, prob_cruce){
   # Supongo que todos los padres tienen la misma longitud
   # Solo preparado para 2 PADRES
@@ -95,6 +110,19 @@ nuevos_hijos <- function(x,
 
 # Mutación ----------------------------------------------------------------
 
+#' Mutación random resetting.
+#' 
+#' 
+#' 
+#'
+#' @param x vector. Genotipo sobre el que provocar mutaciones.
+#' @param prob float. Probabilidad de que se aplique mutación en cada gen.
+#' @param valores_posibles vector. Valores posibles para la mutación de cada gen.
+#'
+#' @return
+#' @export
+#'
+#' @examples
 random_resetting <- function(x, prob, valores_posibles){
   genes_mutantes <- runif(length(x)) < prob
   x[genes_mutantes] <- sample(valores_posibles,
@@ -103,6 +131,16 @@ random_resetting <- function(x, prob, valores_posibles){
   return(x)
 }
 
+#' Aplicar mutaciones sobre los individuos de una población
+#'
+#' @param x list. Lista con los genotipos de los individuos de la población.
+#' @param prob_mutacion float. Probabilidad de que se aplique mutación en cada gen.
+#' @param valores_posibles vector. Valores posibles de mutaciones en cada gen.
+#'
+#' @return
+#' @export
+#'
+#' @examples
 mutacion_poblacion <- function(x, prob_mutacion, valores_posibles){
   return(
     lapply(x, 

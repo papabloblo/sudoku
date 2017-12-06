@@ -1,3 +1,16 @@
+#' Generación de población.
+#' 
+#' Genera la población 
+#' 
+#'
+#' @param valores_posibles Vector. Los distintos valores que puede tomar un gen.
+#' @param num_genes Integer. Número de genes que contiene el genotipo
+#' @param tam_poblacion Integer. Número de individuos que contendrá la población resultante
+#'
+#' @return 
+#' @export
+#'
+#' @examples
 generacion_poblacion <- function(valores_posibles,
                                  num_genes,
                                  tam_poblacion){
@@ -8,6 +21,25 @@ generacion_poblacion <- function(valores_posibles,
 }
 
 
+#' Algoritmo genético
+#'
+#' @param poblacion_inicial list. Lista con los individuos de la población inicial.
+#' @param funcion_fitness function.
+#' @param genes_fijos vector.
+#' @param valores_mutacion vector.
+#' @param num_padres integer.
+#' @param prob_cruce float.
+#' @param tam_torneo integer.
+#' @param prob_mutacion float.
+#' @param tam_poblacion integer.
+#' @param max_iter integer. Número máximo de iteraciones del algoritmo genético.
+#' @param print_each integer. Número de iteraciones entre las que
+#'  se muestra información por pantalla
+#'
+#' @return
+#' @export
+#'
+#' @examples
 algoritmo_genetico <- function(poblacion_inicial,
 
                                funcion_fitness,
