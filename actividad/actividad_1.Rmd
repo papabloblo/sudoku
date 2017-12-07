@@ -1,13 +1,19 @@
 ---
 title: "Actividad 1"
-author: Pablo Hidalgo García
-output: 
-  html_notebook: 
+author: "Pablo Hidalgo García"
+output:
+  html_notebook:
     number_sections: yes
-    toc: yes
     theme: flatly
+    toc: yes
+  pdf_document:
+    toc: yes
+    number_sections: yes
 bibliography: library.bib
 ---
+```{r}
+library(sudoku)
+```
 
 
 # Introducción
@@ -40,7 +46,7 @@ Estas reglas de resolución explican porqué Sudoku significa "un solo número" 
 
 El problema puede ser expresado matemáticamente de múltiples formas. El desarrollo elegido tiene la motivación de que la aplicación del algoritmo evolutivo sea más natural.
 
-El sudoku se se expresa como un vector $\mathbf{s} = (s_1, s_2, \ldots, s_{81})$ donde $s_i \in \{0, 1,2,\ldots,9\}$ para $i = 1, \ldots, 81$. Los elementos sobre los que se deben evaluar la correcta resolución del problema y que servirán para calcular la función *fitness* del algoritmo evolutivo se describen matemáticamente como
+El sudoku se se expresa como un vector $\mathbf{s} = (s_1, s_2, \ldots, s_{81})$ donde $s_i \in \{0, 1, 2,\ldots,9\}$ para $i = 1, \ldots, 81$. Los elementos sobre los que se deben evaluar la correcta resolución del problema y que servirán para calcular la función *fitness* del algoritmo evolutivo se describen matemáticamente como
 
 $$
 columna(j) = \{i \in \{1,\ldots, 81\}\, | \, mod(i, 9)= mod(j, 9)\} 
@@ -58,16 +64,20 @@ $$
 <!-- fila_j = \{i \in \{1,\ldots, 81\}\, | \, (j-1)\cdot9 \lt i\leq j\cdot9\}  -->
 <!-- $$ -->
 
-$$
-subcuadrícula_j = \{i \in \{1,\ldots, 81\}\, | \, (j-1)\cdot3 \lt i\leq j\cdot3 \,  \cup \, mod(i, 3) + 1= j \} 
-$$
+<!-- $$ -->
+<!-- subcuadrícula_j = \{i \in \{1,\ldots, 81\}\, | \, (j-1)\cdot 3 \lt i\leq j\cdot3 \,  \cup \, mod(i, 3) + 1= j \}  -->
+<!-- $$ -->
 donde $\lfloor a \rfloor$ se refiere a la parte entera de $a$.
 
 Por otro lado, definimos la funciones:
 
 $$
-c(i) = \sum_{\{j \in columna(i)|j \ne i\}} I(s_i = s_j) \\
+c(i) = \sum_{\{j \in columna(i)|j \ne i\}} I(s_i = s_j) 
+$$
+$$
 f(i) = \sum_{\{j \in fila(i)|j \ne i\}} I(s_i = s_j) \\
+$$
+$$
 s(i) = \sum_{\{j \in subcuadrícula(i)|j \ne i\}} I(s_i = s_j) \\
 $$
 
@@ -129,34 +139,198 @@ $$
 
 El juego del sudoku se va a abordar mediante un algoritmo genético. Hay distintas estrategias que se podrían seguir para este problema. En este caso, la implementación se ha realizado conforme a las características que se detallan a continuación.
 
+## Estructura de códigos en R
+
+Los códigos implementados se encuentran en la carpeta `\R`.
+
+Para que los resultados de las siguientes secciones sea reproducibles, se fija la semilla para la generación de valores aleatorios
+
+```{r}
+set.seed(123)
+```
+
+
 ## Representación de cada individuo 
 
-Cada celda $s_i$ del sudoku estará asociada a un gen representado por números enteros del 1 al 9, es decir, $s_i\in \{1, 2, \ldots, 9\}$. El genotipo estará entonces representado por una cadena de enteros.
+Cada celda $s_i$ del sudoku estará asociada a un gen representado por números enteros del 1 al 9, es decir, $s_i\in \{1, 2, \ldots, 9\}$. El genotipo estará entonces representado por una cadena de enteros. Lo que es lo mismo, se realizará una muestra con reemplazamiento de los enteros del 1 al 9 con una longitud determinada.
+
+La función `random_integer_representation()` es la que permite obtener este tipo de representación. Necesita los argumentos:
+
+- `valores`: vector con los valores posibles que puede tomar cada gen.
+- `tam`: número entero con el tamaño del genotipo (número de genes).
+
+Como ejemplo:
+
+```{r}
+random_integer_representation(valores = 1:9, tam = 9)
+```
+
 
 Aunque el genotipo de cada individuo contendrá un total de $81$ genes, solo se aplicará el algoritmo sobre aquellos genes (casillas) que estén vacíos en la solución inicial. Por tanto, el algoritmo genético manejará el genotipo $s_0$ de forma que 
+
 $$
 s_i = s^1_i si 
 $$
+
 
 ## Función de adaptación (*fitness*)
 
 La función de *fitness* que el algoritmo tratará de minimizar será la que aparece en la ecuación ]bla]. Como se dijo anteriormente, un valor de $fitness(s)=0$ asegura que el juego ha sido resuelto. El valor máximo de esta función se alcanzará cuando **todas las casillas (genes) contengan el mismo valor** y tendrá un valor de $fitness(s) = 972$ 
 
+Las funciones implementadas para el cálculo de la función de fitness se encuentran en `\R\fitness.R`. 
+
+La función `fitness_sudoku()` calcula la función de fitness para un individuo dado y necesita los argumentos:
+
+- `x`: un vector con el genotipo del individuo.
+- `ind_cuadricula`: un vector indicando qué posiciones equivalen a la representación de las subcuadrículas.
+- `solucion_inicial`: un vector representando la solución inicial del sudoku que contendrá `NA` en aquellas posiciones que originalmente aparecían vacías.
+
+En nuestro caso, el `ind_cuadricula` se representa como
+
+```{r}
+ind_cuadricula <- c(
+  rep(rep(x = 1:3, each = 3), 3), 
+  rep(rep(x = 4:6, each = 3), 3),
+  rep(rep(x = 7:9, each = 3), 3))
+ind_cuadricula
+```
+
+Viendo este vector como una matriz, se pone de relieve cómo están representadas las subcuadrículas
+
+```{r}
+matrix(ind_cuadricula, nrow = 9, ncol = 9)
+```
+
+Un ejemplo de solución inicial del sudoku se podría representar así:
+
+```{r}
+sudoku_facil <- c(NA, NA, NA, NA,  3, NA, NA, NA,  4,
+                  NA,  9, NA,  4, NA,  6, NA,  7, NA,
+                  NA,  5, NA, NA, NA, NA,  3,  8, NA,
+                  NA, NA, NA, NA,  7,  8, NA, NA,  3,
+                   3, NA, NA, NA, NA, NA,  6,  9, NA,
+                   5,  4, NA,  6, NA, NA, NA,  2, NA,
+                   7, NA,  5, NA,  2,  4, NA, NA, NA,
+                   9,  8,  4, NA,  6,  5,  2, NA, NA,
+                  NA,  2,  6, NA,  8, NA, NA, NA,  9)
+```
+
+El genotipo de los individuos estará representado por el número de casillas vacías en la solución inicial, es decir,
+
+```{r}
+tam_individuos <- sum(is.na(sudoku_facil))
+tam_individuos
+```
+
+Simulamos un individuo con `48` genes, en este caso,
+
+```{r}
+individuo <- random_integer_representation(valores = 1:9, tam = tam_individuos)
+```
+
+Ya podemos calcular el valor de la función de fitness para este individuo.
+
+```{r}
+fitness_sudoku(x = individuo, 
+               ind_cuadricula = ind_cuadricula,
+               solucion_inicial = sudoku_facil)
+```
+
+
 ## Inicialización de la población
 
 La población inicial del algoritmo se realizatá de forma aleatoria, es decir, cada individuo estará representado por los genes que le corresponda y cada gen se inicializará como un número entero aleatorio entre 1 y 9.
+
+Esto se permite gracias a la función `generacion_poblacion()` cuyos argumentos son:
+
+- `valores_posibles`: vector con los valores posibles que puede tomar cada gen.
+- `num_genes`: número entero con el tamaño del genotipo (número de genes).
+- `tam_poblacion`: entero con el número de individuos de los que estará formada la población.
+
+El resultado es una lista compuesta por los distintos individuos. Por ejemplo,
+
+```{r}
+poblacion <- generacion_poblacion(valores_posibles = 1:9, 
+                                  num_genes = tam_individuos, 
+                                  tam_poblacion = 3)
+poblacion
+```
+
 
 ## Selección de padres
 
 Para poder realizar el cruce entre individuos que se describe en la siguiente sección, es necesario elegir los padres, es decir, aquellos individuos entre los que realizar el cruce. En este caso se realiza la **selección por torneo**.
 
+Tenemos la función `seleccion_padres()` cuyos argumentos son:
+
+- `num_padres`:
+- `poblacion`: lista con los individuos que compoenn
+- `fitness_poblacion`: vector con el valor de fitness para cada genotipo de la población.
+- `k`: entero con el número de competidores del torneo
+
+El resultado es una lista con los padres elegidos por torneo.
+
+```{r}
+padres <- seleccion_padres(num_padres = 2,
+                 poblacion = poblacion,
+                 fitness_poblacion = sapply(poblacion, 
+                                            fitness_sudoku, 
+                                            ind_cuadricula = ind_cuadricula,
+                                            solucion_inicial = sudoku_facil),
+                 k = 2)
+
+padres
+```
+
 ## Cruce
 El cruce entre los padres se realizará mediante **cruce por un punto**.
 
+Función `one_point_crossover()` con argumentos:
+
+- `padres`: lista con los padres seleccionados para el cruce.
+- `prob_cruce`: `numeric` en [0, 1] representando la probabilidad de que los padres se crucen y tengan descendencia o se mantengan.
+
+```{r}
+resultado_cruce <- one_point_crossover(padres = padres, prob_cruce = 0.75)
+resultado_cruce
+```
+
+
 ## Mutación
+
 Una vez producido el cruce entre padres y obtenida su descendencia, se aplicará mutación *random resetting*, es decir, cada uno de los genes de cada individuo podrá sufrir una mutación con una probabilidad dada. En el caso de que se produzca una mutación en un gen, esta podrá tomar un valor entero aleatorio entre 1 y 9.
 
+`random_resetting()` con parámetros:
+
+- `x`: individuo sobre el que provocar mutaciones
+- `prob`: probabilidad de que se aplique mutación en cada gen.
+- `valores_posibles`: vector con valores posibles para la mutación de cada gen.
+
+```{r}
+random_resetting(individuo, prob = 0.1, valores_posibles = 1:9)
+```
+
+
 ## Selección de supervivientes
+
+Se utilizará un modelo de tipo generacional, reemplazando la población actual enteramente por una nueva aplicando, eso sí, elitismo para conservar el emjor individuo en la siguiente generación y eliminando el peor.
+
+## El algoritmo
+
+Una ejecución del algoritmo se realizará gracias a la función `algoritmo_genetico()` con parámetros
+
+- `poblacion_inicial`: lista con los individuos que compone la población inicial.
+- `funcion_fitness`: función que calculael fitness de cada individuo de la población.
+- `genes_fijos`: ...
+- `valores_mutacion`: vector con los valores posibles para la mutación.
+- `num_padres`: entero con el número de padres.
+- `prob_cruce`: probabilidad de que se produzca cruce entre padres.
+- `tam_torneo`: tamaño del torneo en la selección de padres por torneo.
+- `prob_mutacion`: probabilidad de que se produzca una mutación en cada gen del individuo.
+- `tam_poblacion`: tamaño de la población ¿?
+- `max_iter`: iteraciones máximas que realizará el algoritmo
+- `print_each`: imprimir por pantalla información del algoritmo cada `print_each` iteraciones.
+
 
 Se ha elegido como lenguaje de programación R. R es un tipo de lenguaje *Open Source* con una gran aceptación dentro del área del *data science*. 
 
@@ -169,7 +343,16 @@ Toda la documentación de cada una de las funciones implementadas se encuentra e
 # Evaluación experimental
 
 El objetivo último es el de **evaluar cómo impactan los diferentes valores de la probabilidad de mutación en el algoritmo genético**. 
-Los parámetros que rigen el algoritmo genético son:
+
+Para ello se ha seguido la siguiente metodología.
+
+- Probar el algoritmo con dos instancias: una compleja y otra sencilla.
+- Con una configuración de parámetros fija, variar la probabilidad de mutación para ver cómo ésta puede afectar al desarrollo del algoritmo.
+- Construir 50 muestras aleatorias de los parámetros para poder cubrir el mayor espacio y poder extraer conclusiones del algoritmo.
+
+
+
+Los parámetros que rigen el algoritmo genético que se van a variar son:
 
 - Tamaño de la población.
 - En la selección de padres por torneo, el tamaño del torneo.
