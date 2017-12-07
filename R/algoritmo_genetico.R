@@ -110,6 +110,26 @@ algoritmo_genetico <- function(poblacion_inicial,
 
 
 
+#' Title
+#'
+#' @param num_pruebas 
+#' @param generacion_poblacion_ini 
+#' @param tam_poblacion 
+#' @param valores_posibles 
+#' @param funcion_fitness 
+#' @param genes_fijos 
+#' @param valores_mutacion 
+#' @param num_padres 
+#' @param prob_cruce 
+#' @param tam_torneo 
+#' @param prob_mutacion 
+#' @param max_iter 
+#' @param print_each 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 pruebas_ga <- function(num_pruebas = 10,
                        generacion_poblacion_ini,
                        tam_poblacion,
