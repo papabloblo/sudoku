@@ -61,7 +61,7 @@ fitness_sudoku <- function(x, ind_cuadricula = ind_cuadricula, solucion_inicial)
 
   solucion_inicial[casillas_vacias] <- x
 
-  x <- matrix(x,
+  x <- matrix(solucion_inicial,
               ncol = 9,
               nrow = 9)
   
