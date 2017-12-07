@@ -3,7 +3,7 @@
 #' Generación aleatoria de un individuo cuyo genotipo está representado 
 #' por una cadena de enteros.
 #'
-#' @param valores vector. Valores posibles que puede tener cada gen.
+#' @param valores vector. Valores posibles que puede tomar cada gen.
 #' @param tam integer. Tamaño del genotipo.
 #'
 #' @return
