@@ -45,7 +45,17 @@ ind_cuadricula <- c(
   rep(rep(x = 4:6, each = 3), 3),
   rep(rep(x = 7:9, each = 3), 3))
 
-fitness_sudoku <- function(x, ind_cudricula = ind_cuadricula, solucion_inicial){
+#' Title
+#'
+#' @param x 
+#' @param ind_cudricula 
+#' @param solucion_inicial 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+fitness_sudoku <- function(x, ind_cuadricula = ind_cuadricula, solucion_inicial){
   
   casillas_vacias <- is.na(solucion_inicial)
 
