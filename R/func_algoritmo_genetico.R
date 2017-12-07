@@ -14,6 +14,30 @@ random_integer_representation <- function(valores, tam){
   sample(valores, size = tam, replace = TRUE)
 }
 
+#' Generación de población.
+#' 
+#' Genera la población 
+#' 
+#'
+#' @param valores_posibles Vector. Los distintos valores que puede tomar un gen.
+#' @param num_genes Integer. Número de genes que contiene el genotipo
+#' @param tam_poblacion Integer. Número de individuos que contendrá la población resultante
+#'
+#' @return 
+#' @export
+#'
+#' @examples
+generacion_poblacion <- function(valores_posibles,
+                                 num_genes,
+                                 tam_poblacion){
+  replicate(n = tam_poblacion,
+            random_integer_representation(valores_posibles, num_genes),
+            simplify = FALSE
+  )
+}
+
+
+
 #' Torneo
 #'
 #' @param poblacion list. Lista con los genotipos de la población.

@@ -1,25 +1,3 @@
-#' Generación de población.
-#' 
-#' Genera la población 
-#' 
-#'
-#' @param valores_posibles Vector. Los distintos valores que puede tomar un gen.
-#' @param num_genes Integer. Número de genes que contiene el genotipo
-#' @param tam_poblacion Integer. Número de individuos que contendrá la población resultante
-#'
-#' @return 
-#' @export
-#'
-#' @examples
-generacion_poblacion <- function(valores_posibles,
-                                 num_genes,
-                                 tam_poblacion){
-  replicate(n = tam_poblacion,
-            random_integer_representation(valores_posibles, num_genes),
-            simplify = FALSE
-  )
-}
-
 
 #' Algoritmo genético
 #'
@@ -98,6 +76,7 @@ algoritmo_genetico <- function(poblacion_inicial,
 
     fitness <- lapply(poblacion,
                       funcion_fitness,
+                      ind_cuadricula = ind_cuadricula,
                       solucion_inicial = genes_fijos)
 
     peor <- which(unlist(fitness) == max(unlist(fitness)))
