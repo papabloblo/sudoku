@@ -56,6 +56,17 @@ torneo <- function(poblacion,
   return(poblacion[[mejor_competidor]])
 }
 
+#' Title
+#'
+#' @param num_padres 
+#' @param poblacion 
+#' @param fitness_poblacion 
+#' @param k 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 seleccion_padres <- function(num_padres,
                              poblacion, 
                              fitness_poblacion,
@@ -106,6 +117,19 @@ one_point_crossover <- function(padres, prob_cruce){
   return(hijos) 
 }
 
+#' Title
+#'
+#' @param x 
+#' @param x_fitness 
+#' @param num_padres 
+#' @param num_emparejamientos 
+#' @param prob_cruce 
+#' @param k 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 nuevos_hijos <- function(x, 
                          x_fitness,
                          num_padres, 
