@@ -453,11 +453,26 @@ save(resultados_dificil, file = paste0("data/prueba_facil_", Sys.Date(), ".RData
 ```
 
 
-Los resultados de esta ejecución se encuentran en el archivo `actividad/prueba_facil_2017-12-10.RData`. El objeto `resultados_facil`
+Los resultados de esta ejecución se encuentran en el archivo `actividad/prueba_facil_2017-12-10.RData`. El objeto `resultados_facil` contiene una gran cantidad de información (población de cada iteración, fitness de cada individuo, etcétera). Para el cálculo de las métricas y la discusión de resultados, generamos la siguiente tabla 
 
 ```{r}
 load("tabla_facil_aprox1_2017-12-10.RData")
+head(tabla_facil_aprox1)
 ```
+
+En esta tabla se recogen todas las ejecuciones y se ha calculado el valor mínimo y máximo de la función de fitness en cada iteración así como el valor medio. Cada valor está  relacionado mediante `id.comb` (identificador de la combinación) e `id.replica` (identificador de las pruebas para cada combinación).
+
+Para el cálculo de otras métricas, se genera una tabla en la que se recoge la iteración en la que se haya alcanzado por primera vez el mínimo valor de fitness para cada `id.comb` e `id.replica`.
+
+```{r}
+min_iter_facil <- tabla_facil_aprox1 %>%
+  group_by(id.comb, id.replica) %>% 
+  top_n(-1, min) %>% 
+  top_n(-1, iter)
+min_iter_facil
+```
+
+#### Discusión de resultados
 
 En la siguiente figura se muestra el progreso del algoritmo. Cada una de las líneas representa una ejecución de cada una de las combinaciones de los parámteros.
 
@@ -470,9 +485,33 @@ tabla_facil_aprox1 %>%
   geom_smooth( color = "firebrick") 
 ```
 
-La curva roja representa un ajuste global mediante *GAM* (falta referencia) que permite ver la tendencia de la curva. Como suele ser habitual en los algoritmos genéticos, en las primeras iteraciones el algoritmo presenta una fuerte disminución de la función de fitness para después empezar a estabilizarse. En estas $50$ pruebas con $5$ combinaciones de parámetros y $5000$ iteraciones, **ninguna ejecución ha alcanzado el óptimo**, es decir, una valor de fitness de 0. Al haberse aplicado elitismo en el algoritmo, se aprecian escalones en las líneas. 
+La curva roja representa un ajuste global mediante *GAM* (falta referencia) que permite ver la tendencia de la curva. Como suele ser habitual en los algoritmos genéticos, en las primeras iteraciones el algoritmo presenta una fuerte disminución de la función de fitness para después empezar a estabilizarse. En estas $50$ pruebas con $5$ combinaciones de parámetros y $5000$ iteraciones, **ninguna ejecución ha alcanzado el óptimo**, es decir, una valor de fitness de 0. Al haberse aplicado elitismo en el algoritmo, se aprecian escalones en las líneas. Cabe destacar las línera superiores que se mantienen casi constantes; se corresponden con las ejecuciones realizadas con el valor de **probabilidad de mutación igual a 1**. 
 
-Ya que nuestro interés se centra en la probabilidad de mutación, podemos comrobar cómo se comporta el aprendizaje del algoritmo dibujando una curva *gam* para cada probabilidad de mutación.
+En el siguiente gráfico se puede ver la distribución de los valores de fitness de amnera global
+
+```{r}
+min_iter_facil %>% 
+  ggplot(aes(x = min)) + 
+  geom_histogram()
+```
+
+```{r}
+min_iter_facil %>% 
+  ggplot(aes(x = 'Instancia sencilla' , y = min)) + 
+  geom_jitter(height = 0, width = 0.25, size = 4, alpha = 0.6, color = "steelblue") + 
+  geom_boxplot(alpha = 0)
+  
+```
+
+Además, se muestra que el mínimo se alcanza en `r min(min_iter_facil$min)`, siendo su media y desviación típica, `r mean(min_iter_facil$min)` y `r sd(min_iter_facil$min)`, respectivamente.
+
+```{r}
+summary(min_iter_facil$min)
+sd(min_iter_facil$min)
+```
+
+
+Ya que nuestro interés se centra en la probabilidad de mutación, podemos comprobar cómo se comporta el aprendizaje del algoritmo dibujando una curva *GAM* para cada probabilidad de mutación.
 
 ```{r}
 tabla_facil_aprox1 %>%
@@ -489,7 +528,68 @@ En este caso, cuanto más alta es la probabilidad de mutación, el algoritmo tar
 Para enfrentar directamente la probabilidad de mutación y el valor de  fitness, cada punto representa el mínimo valor de fitness alcanzado en cada ejecución del algoritmo. Se han agitado los puntos horizontalmente para poder intuir su distribución y se ha dibujado sobre ellos un diagrama de cajas.
 
 ```{r}
-min_iter <- tabla_facil_aprox1 %>%
+min_iter_facil %>% 
+  ggplot(aes(x = factor(prob_mutacion), 
+             y = min)) + 
+  geom_jitter(height = 0, size = 3, color = "steelblue", alpha = 0.7) + 
+  geom_boxplot(alpha = 0)
+```
+
+Se aprecia una relación creciente, de hecho la correlación lineal de Pearson obtiene un valor de `r cor(min_iter_facil$prob_mutacion, min_iter_facil$min)`. En el gráfico, no obstante, se aprecia una cierta relación no lineal, con valores de fintess prácticamente indistinguibles para las probabilidades de mutación $0.005$, $0.01$ y $0.05$. Siendo conscientes de una cierta tendencia no lineal, aplicamos aún así un modelo de regresión lineal simple para relacionar la probabilidad de mutación con el fitness obtenido.
+
+```{r}
+summary(lm(formula = min ~ I(prob_mutacion*100), data = min_iter_facil))
+```
+En el ajuste lineal, la variable `prob_mutacion` obtiene un p-valor por debajo de $2e-16$ indicando que hay evidencia estadística significativa de que la probabilidad de mutación afecta al fitness del problema. El parámetro de la regresión para esta variable es de $1.23$, es decir, suponiendo una **tendencia lineal**, cada incremento del $1%$ en la probabilidad de mutación supondría un incremento de $1.23$ en el valor de fitness.
+
+Por supuesto, hay que destacar el comportamiento anómalo del algoritmo cuando no se considera mutación (`prob_mutacion = 0`). En este caso los valores son muy superiores al resto de grupos, obteniendo
+
+```{r}
+summary(filter(min_iter_facil, prob_mutacion == 0)$min)
+```
+
+
+```{r}
+min_iter_facil %>% 
+  ggplot(aes(x = prob_mutacion, 
+             y = iter, size =-min)) + 
+  geom_jitter(height = 0, width = 0.01, color = "steelblue", alpha = 0.7)
+```
+
+```{r}
+min_iter_facil %>% 
+  ggplot(aes(x = factor(prob_mutacion), 
+             y = iter)) + 
+  geom_jitter(height = 0, size = 3, color = "steelblue", alpha = 0.7) + 
+  geom_boxplot(alpha = 0)
+```
+
+Se intuye una cierta relación entre la probabilidad de mutación y el número de iteraciones necesarias para alcanzar el mínimo valor del fitness. Valores menores de probabilidades de mutación consiguen encontrar antes, en media, el mínimo valor de la función de fitness.
+
+```{r}
+min_iter_facil %>% 
+  group_by(prob_mutacion) %>% 
+  summarise(mean.min = mean(min),
+            sd.min = sd(min))
+```
+
+Aunque la media del fitness mínimos para cada probabilidad de mutación fluctúa, la desviación estándar es similar entre los distintos grupos.
+
+**¡CONTRASTE DE MEDIAS!**
+
+### Aproximación 2
+
+En la segunda aproximación, el grid de combinaciones con el que se han realizado las ejecuciones del algoritmo ha sido:
+
+```{r, eval=FALSE}
+load("sudoko_facil_2017-12-07.RData")
+tabla_facil_aprox2 <- analisis_result_tabla(resultados_facil)
+saveRDS(tabla_facil_aprox2, "tabla_facil_aprox2.RDS")
+```
+
+```{r}
+tabla_facil_aprox2 <- readRDS("tabla_facil_aprox2.RDS")
+min_iter_facil_aprox2 <- tabla_facil_aprox2 %>%
   group_by(id.comb, id.replica) %>% 
   top_n(-1, min) %>% 
   top_n(-1, iter)
@@ -497,47 +597,55 @@ min_iter <- tabla_facil_aprox1 %>%
 ```
 
 ```{r}
-min_iter %>% 
+tabla_facil_aprox2 %>%
+  ggplot(aes(x = iter,
+             y = min)) +
+  geom_line(aes(group = paste(id.comb, id.replica))) +
+  ylim(0, NA) + 
+  geom_smooth( color = "firebrick") 
+```
+
+```{r}
+min_iter_facil_aprox2 %>% 
+  filter(min < 60) %>% 
   ggplot(aes(x = prob_mutacion, 
              y = min)) + 
   geom_point(size = 3, color = "steelblue", alpha = 0.7) + 
   geom_smooth()
 ```
 
-
 ```{r}
-min_iter %>% 
-  ggplot(aes(x = factor(prob_mutacion), 
-             y = min)) + 
-  geom_jitter(height = 0, size = 3, color = "steelblue", alpha = 0.7) + 
-  geom_boxplot(alpha = 0)
+min_iter_facil_aprox2 %>% 
+  ggplot(aes(x = prob_mutacion, 
+             y = iter)) + 
+  geom_point( size = 3, color = "steelblue", alpha = 0.7)
 ```
-
-Se aprecia una relación creciente. La correlación lineal de Pearson obtiene un valor de `r cor(min_iter$prob_mutacion, min_iter$min)`. Y, si aplicamos un modelo de regresión lineal simple
-
-```{r}
-summary(lm(formula = min ~ I(prob_mutacion*100), data = min_iter))
-```
-En el ajuste lineal, la variable `prob_mutacion` obtiene un p-valor por debajo de $2e-16$ indicando que hay evidencia estadística significativa de que la probabilidad de mutación afecta al fitness del problema. El parámetro de la regresión para esta variable es de $1.23$, es decir, suponiendo una **tendencia lineal**, cada incremento del $1%$ en la probabilidad de mutación supondría un incremento de $1.23$ en el valor de fitness.
-
-No obstante, en la parte izquierda de la gráfica, se observa cierta tendencia no lineal e, incluso, el valor de fitness para las ejecuciones con probabilidad $0.01$ es ligeramente superior al $0.05$, que podria 
-
-
-
-### Aproximación 2
 
 ## Instancia compleja
 
-
 ### Aproximación 1
 
-Los resultados de esta ejecución se encuentran en el archivo `actividad/tabla_facil_aprox1_2017-12-10.RData`
+La discusión de resultados seguirá la misma línea que lo expuesto en la sección **BLA** por lo que se omitirá el detalle de los cálculos.
+
+Para la instancia compleja, se ha elegido un tamaño de población de $100$.
+
+Los resultados de esta ejecución se encuentran en el archivo `actividad/tabla_dificil_aprox1_2017-12-11.RData`
 
 ```{r}
 load("tabla_dificil_aprox1_2017-12-11.RData")
 ```
 
-En la siguiente figura se muestra el progreso del algoritmo. Cada una de las líneas representa una ejecución de cada una de las combinaciones de los parámteros.
+```{r}
+min_iter_dificil <- tabla_dificil_aprox1 %>%
+  group_by(id.comb, id.replica) %>% 
+  top_n(-1, min) %>% 
+  top_n(-1, iter)
+
+```
+
+
+
+En la siguiente figura se muestra el progreso del algoritmo. Cada una de las líneas representa una ejecución de cada una de las combinaciones de los parámetros.
 
 ```{r}
 tabla_dificil_aprox1 %>%
@@ -548,9 +656,9 @@ tabla_dificil_aprox1 %>%
   geom_smooth( color = "firebrick") 
 ```
 
-La curva roja representa un ajuste global mediante *GAM* (falta referencia) que permite ver la tendencia de la curva. Como suele ser habitual en los algoritmos genéticos, en las primeras iteraciones el algoritmo presenta una fuerte disminución de la función de fitness para después empezar a estabilizarse. En estas $50$ pruebas con $5$ combinaciones de parámetros y $5000$ iteraciones, **ninguna ejecución ha alcanzado el óptimo**, es decir, una valor de fitness de 0. Al haberse aplicado elitismo en el algoritmo, se aprecian escalones en las líneas. 
+La tendencia es similar a la seguida en la instancia sencilla, con una bajada de la función de fitness muy acusada en las primeras iteraciones y una estabilización general después.
 
-Ya que nuestro interés se centra en la probabilidad de mutación, podemos comrobar cómo se comporta el aprendizaje del algoritmo dibujando una curva *gam* para cada probabilidad de mutación.
+Igualmente parece existir una relación entre la probabilidad de mutación y la convergencia del algoritmo de forma que con un nivel menos de probabilidad de mutación se obtiene una convergencia más rápida y, con el líminte impuesto de $5000$ iteraciones, llega a un menor valor de la función de fitness las probabilidades de mutación menores.
 
 ```{r}
 tabla_dificil_aprox1 %>%
@@ -562,12 +670,10 @@ tabla_dificil_aprox1 %>%
   geom_smooth() 
 ```
 
-En este caso, cuanto más alta es la probabilidad de mutación, el algoritmo tarda más en aprender.
-
 Para enfrentar directamente la probabilidad de mutación y el valor de  fitness, cada punto representa el mínimo valor de fitness alcanzado en cada ejecución del algoritmo. Se han agitado los puntos horizontalmente para poder intuir su distribución y se ha dibujado sobre ellos un diagrama de cajas.
 
 ```{r}
-min_iter <- tabla_dificil_aprox1 %>%
+min_iter_dificil <- tabla_dificil_aprox1 %>%
   group_by(id.comb, id.replica) %>% 
   top_n(-1, min) %>% 
   top_n(-1, iter)
@@ -575,7 +681,7 @@ min_iter <- tabla_dificil_aprox1 %>%
 ```
 
 ```{r}
-min_iter %>% 
+min_iter_dificil %>% 
   ggplot(aes(x = prob_mutacion, 
              y = min)) + 
   geom_point(size = 3, color = "steelblue", alpha = 0.7) + 
@@ -584,26 +690,123 @@ min_iter %>%
 
 
 ```{r}
-min_iter %>% 
+min_iter_dificil %>% 
   ggplot(aes(x = factor(prob_mutacion), 
              y = min)) + 
   geom_jitter(height = 0, size = 3, color = "steelblue", alpha = 0.7) + 
   geom_boxplot(alpha = 0)
 ```
 
-Se aprecia una relación creciente. La correlación lineal de Pearson obtiene un valor de `r cor(min_iter$prob_mutacion, min_iter$min)`. Y, si aplicamos un modelo de regresión lineal simple
+De nuevo se aprecia una relación, esta vez más claramente no lineal. En la instancia sencilla, el resultado medio de la función de fitness para las probabilidades de mutación de $0.01$ y $0.05$ era prácticamente indistinguibles. Sin embargo, en la instancia compleja el mínimo de la función de fitness (en media) se alcanza con una probabilidad de mutación de $0.05$.
+
+Se aprecia una relación creciente. La correlación lineal de Pearson obtiene un valor de `r cor(min_iter_dificil$prob_mutacion, min_iter_dificil$min)`. Y, si aplicamos un modelo de regresión lineal simple
 
 ```{r}
-summary(lm(formula = min ~ I(prob_mutacion*100), data = min_iter))
+summary(lm(formula = min ~ I(prob_mutacion*100), data = min_iter_dificil))
 ```
-En el ajuste lineal, la variable `prob_mutacion` obtiene un p-valor por debajo de $2e-16$ indicando que hay evidencia estadística significativa de que la probabilidad de mutación afecta al fitness del problema. El parámetro de la regresión para esta variable es de $1.23$, es decir, suponiendo una **tendencia lineal**, cada incremento del $1%$ en la probabilidad de mutación supondría un incremento de $1.23$ en el valor de fitness.
 
-No obstante, en la parte izquierda de la gráfica, se observa cierta tendencia no lineal e, incluso, el valor de fitness para las ejecuciones con probabilidad $0.01$ es ligeramente superior al $0.05$, que podria 
+En el ajuste lineal, la variable `prob_mutacion` obtiene un p-valor por debajo de $2e-16$ indicando que hay evidencia estadística significativa de que la probabilidad de mutación afecta al fitness del problema. El parámetro de la regresión para esta variable es de $1.18597$, es decir, suponiendo una **tendencia lineal**, cada incremento del $1%$ en la probabilidad de mutación supondría un incremento de $1.18597$ en el valor de fitness.
 
+
+```{r}
+min_iter_dificil %>% 
+  ggplot(aes(x = factor(prob_mutacion), 
+             y = iter)) + 
+  geom_jitter(height = 0, size = 3, color = "steelblue", alpha = 0.7) + 
+  geom_boxplot(alpha = 0)
+```
+
+### Aproximación 2
+
+```{r, eval=FALSE}
+load("sudoko_dificil_2017-12-11.RData")
+tabla_dificil_aprox2 <- analisis_result_tabla(resultados_dificil)
+saveRDS(tabla_dificil_aprox2, "tabla_dificil_aprox2.RDS")
+```
+
+
+```{r}
+tabla_dificil_aprox2 <- readRDS("tabla_dificil_aprox2.RDS")
+min_iter_dificil_aprox2 <- tabla_dificil_aprox2 %>%
+  group_by(id.comb, id.replica) %>% 
+  top_n(-1, min) %>% 
+  top_n(-1, iter)
+
+```
+
+```{r}
+tabla_dificil_aprox2 %>%
+  ggplot(aes(x = iter,
+             y = min)) +
+  geom_line(aes(group = paste(id.comb, id.replica))) +
+  ylim(0, NA) + 
+  geom_smooth( color = "firebrick") 
+```
+
+
+```{r}
+min_iter_dificil_aprox2 %>% 
+  filter(min < 60) %>% 
+  ggplot(aes(x = prob_mutacion, 
+             y = min)) + 
+  geom_point(size = 3, color = "steelblue", alpha = 0.7) + 
+  geom_smooth()
+```
+
+```{r}
+min_iter_dificil_aprox2 %>% 
+  ggplot(aes(x = prob_mutacion, 
+             y = iter)) + 
+  geom_point( size = 3, color = "steelblue", alpha = 0.7)
+```
 
 
 
 ## Comparación
+
+```{r}
+min_iter_facil$instancia <- 'sencilla'
+min_iter_dificil$instancia <- 'compleja'
+
+min_iter <- bind_rows(min_iter_facil, min_iter_dificil)
+```
+
+```{r}
+min_iter %>% 
+  filter(prob_mutacion != 0) %>% 
+  ggplot(aes(x = instancia, y = min)) + 
+  geom_jitter(height = 0, size = 3, color = "steelblue", alpha = 0.7) + 
+  geom_boxplot(alpha = 0)
+```
+
+```{r}
+min_iter %>% 
+  filter(prob_mutacion != 0) %>% 
+  ggplot(aes(x = instancia, y = iter)) + 
+  geom_jitter(height = 0, size = 3, color = "steelblue", alpha = 0.7) + 
+  geom_boxplot(alpha = 0)
+```
+
+
+```{r}
+min_iter %>% 
+  filter(prob_mutacion != 0) %>% 
+  ggplot(aes(x = prob_mutacion, y = min, color = instancia)) + 
+  geom_point(size = 3,  alpha = 0.7) 
+```
+```{r}
+min_iter %>% 
+  filter(prob_mutacion != 0) %>% 
+  ggplot(aes(x = prob_mutacion, y = min, color = instancia)) + 
+  geom_smooth(size = 3,  alpha = 0.7) 
+```
+
+```{r}
+min_iter %>% 
+  filter(prob_mutacion != 0) %>% 
+  ggplot(aes(x = prob_mutacion, y = iter, color = instancia)) + 
+  geom_smooth(size = 3,  alpha = 0.7) 
+```
 
 El objetivo último es el de **evaluar cómo impactan los diferentes valores de la probabilidad de mutación en el algoritmo genético**. 
 
