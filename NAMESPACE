@@ -2,9 +2,13 @@
 
 export(algoritmo_genetico)
 export(comprobar)
+export(fitness_sudoku)
 export(generacion_poblacion)
 export(mutacion_poblacion)
+export(nuevos_hijos)
 export(one_point_crossover)
+export(pruebas_ga)
 export(random_integer_representation)
 export(random_resetting)
+export(seleccion_padres)
 export(torneo)
